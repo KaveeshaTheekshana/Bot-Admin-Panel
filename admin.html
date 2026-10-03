@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Admin Panel // User & Plan Tracking Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #08090d;
+            --surface-bg: #0e111a;
+            --card-bg: #131722;
+            --card-hover: #171d2b;
+            --text-main: #f8fafc;
+            --text-muted: #8b9bb4;
+            --text-subtle: #4b5870;
+            --border-color: #1f2738;
+            --border-glow: rgba(59, 130, 246, 0.25);
+            
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.15);
+            --success: #10b981;
+            --success-glow: rgba(16, 185, 129, 0.15);
+            --warning: #f59e0b;
+            --warning-glow: rgba(245, 158, 11, 0.15);
+            --danger: #ef4444;
+            --danger-glow: rgba(239, 68, 68, 0.15);
+            --purple: #a855f7;
+            --purple-glow: rgba(168, 85, 247, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(59, 130, 246, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.05) 0%, transparent 40%);
+        }
+
+        .dashboard-container {
+            width: 100%;
+            max-width: 1320px;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* HEADER */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .header-title-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .brand-badge {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(37, 99, 235, 0.35);
+        }
+
+        .header-titles h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            letter-spacing: -0.02em;
+        }
+
+        .header-titles p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.15rem;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.25rem 0.65rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            color: var(--success);
+            border-radius: 9999px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: var(--success);
+            box-shadow: 0 0 8px var(--success);
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .action-btn {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.6rem 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background-color: var(--card-hover);
+            border-color: var(--primary);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+        }
+
+        .action-btn.primary:hover {
+            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+        }
+
+        /* KPI STATS GRID */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 1rem;
+            width: 100%;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.25rem 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--border-glow);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            flex-shrink: 0;
+        }
+
+        .icon-users { background: var(--primary-glow); color: var(--primary); border: 1px solid rgba(59, 130, 246, 0.2); }
+        .icon-free { background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.2); }
+        .icon-premium { background: var(--warning-glow); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.2); }
+        .icon-exceeded { background: var(--danger-glow); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+        .icon-films { background: var(--success-glow); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
+
+        .stat-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+        }
+
+        .stat-title {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            color: #fff;
+        }
+
+        .stat-subtext {
+            font-size: 0.72rem;
+            color: var(--text-subtle);
+        }
+
+        /* MAIN CONTENT SECTION */
+        .content-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-toolbar {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            background: rgba(255, 255, 255, 0.015);
+        }
+
+        .toolbar-title-group h2 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .toolbar-title-group p {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+        }
+
+        .toolbar-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            position: relative;
+            min-width: 260px;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-subtle);
+            font-size: 0.85rem;
+        }
+
+        .search-input {
+            width: 100%;
+            background-color: var(--surface-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.55rem 1rem 0.55rem 2.2rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+        }
+
+        /* FILTER TABS */
+        .filter-tabs {
+            display: flex;
+            padding: 0.5rem 1.5rem;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(14, 17, 26, 0.6);
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            padding: 0.45rem 0.9rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .tab-btn.active {
+            color: #fff;
+            background: var(--surface-bg);
+            border-color: var(--border-color);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .tab-count {
+            padding: 0.15rem 0.45rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            background: rgba(255, 255, 255, 0.08);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .tab-btn.active .tab-count {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        /* TABLE */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.85rem;
+        }
+
+        thead th {
+            background-color: rgba(14, 17, 26, 0.9);
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            padding: 0.85rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.15s ease;
+        }
+
+        tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        tbody td {
+            padding: 1rem 1.25rem;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        /* USER CELL */
+        .user-cell {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .user-phone-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+        }
+
+        .user-phone {
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+        }
+
+        .copy-btn {
+            background: none;
+            border: none;
+            color: var(--text-subtle);
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: color 0.15s ease;
+        }
+
+        .copy-btn:hover {
+            color: var(--primary);
+        }
+
+        .user-name {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* PLAN BADGES */
+        .plan-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        .plan-free {
+            background: rgba(56, 189, 248, 0.1);
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        .plan-premium {
+            background: rgba(245, 158, 11, 0.12);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.15);
+        }
+
+        .plan-admin {
+            background: rgba(168, 85, 247, 0.15);
+            color: #c084fc;
+            border: 1px solid rgba(168, 85, 247, 0.4);
+            box-shadow: 0 0 12px rgba(168, 85, 247, 0.2);
+        }
+
+        .plan-expired {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        /* VIEW PROGRESS BAR */
+        .progress-box {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            min-width: 140px;
+        }
+
+        .progress-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.3s ease;
+        }
+
+        .fill-green { background: var(--success); }
+        .fill-red { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+        .fill-gold { background: linear-gradient(90deg, #f59e0b, #eab308); }
+
+        /* REMAINING PILL */
+        .remaining-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.25rem 0.65rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .rem-unlimited {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+        }
+
+        .rem-available {
+            background: rgba(16, 185, 129, 0.12);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .rem-exceeded {
+            background: rgba(239, 68, 68, 0.12);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        /* SESSION BADGE */
+        .session-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .session-connected { color: var(--success); }
+        .session-disconnected { color: var(--text-subtle); }
+        .session-pending { color: var(--warning); }
+
+        /* ACTION BUTTONS IN TABLE */
+        .table-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .mini-btn {
+            background: var(--surface-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 0.35rem 0.65rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            transition: all 0.15s ease;
+        }
+
+        .mini-btn:hover {
+            color: #fff;
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .mini-btn.btn-reset:hover {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .mini-btn.btn-prem:hover {
+            border-color: var(--warning);
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .mini-btn.btn-wa {
+            color: #25D366;
+            text-decoration: none;
+        }
+
+        .mini-btn.btn-wa:hover {
+            border-color: #25D366;
+            background: rgba(37, 211, 102, 0.1);
+        }
+
+        /* EMPTY STATE */
+        .empty-state {
+            padding: 4rem 2rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            color: var(--text-muted);
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            color: var(--text-subtle);
+        }
+
+        /* TOAST NOTIFICATION */
+        #toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: #181c27;
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 0.9rem 1.4rem;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 1000;
+        }
+
+        #toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        #toast.success { border-left: 4px solid var(--success); }
+        #toast.error { border-left: 4px solid var(--danger); }
+
+        /* LOADING ANIMATION */
+        .loading-shimmer {
+            animation: pulse-shimmer 1.5s infinite;
+        }
+
+        @keyframes pulse-shimmer {
+            0% { opacity: 1; }
+            50% { opacity: 0.35; }
+            100% { opacity: 1; }
+        }
+
+        @media (max-width: 900px) {
+            body { padding: 1rem; }
+            .header { flex-direction: column; align-items: flex-start; }
+            .header-actions { width: 100%; justify-content: space-between; }
+            .search-box { min-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        <!-- HEADER -->
+        <header class="header">
+            <div class="header-title-group">
+                <div class="brand-badge">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+                <div class="header-titles">
+                    <h1>
+                        Bot Admin Panel 
+                        <span class="status-pill"><span class="status-dot"></span> System Live</span>
+                    </h1>
+                    <p>Live Registered Users, Subscription Plans & 1-View Film Tracking Dashboard</p>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <span id="lastUpdated" style="font-size: 0.75rem; color: var(--text-subtle);"></span>
+                <button class="action-btn" id="refreshBtn" onclick="loadAllData()">
+                    <i class="fa-solid fa-rotate-right"></i> Refresh
+                </button>
+            </div>
+        </header>
+
+        <!-- KPI METRICS GRID -->
+        <section class="stats-grid">
+            <!-- Total Registered Numbers -->
+            <div class="stat-card">
+                <div class="stat-icon icon-users">
+                    <i class="fa-solid fa-address-book"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-title">Registered Numbers</span>
+                    <span class="stat-value loading-shimmer" id="statTotalUsers">...</span>
+                    <span class="stat-subtext" id="statConnectedSub">0 Connected Bots</span>
+                </div>
+            </div>
+
+            <!-- Free Plan Users (1 View) -->
+            <div class="stat-card">
+                <div class="stat-icon icon-free">
+                    <i class="fa-solid fa-user-clock"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-title">Free Plan (1 View)</span>
+                    <span class="stat-value loading-shimmer" id="statFreeUsers">...</span>
+                    <span class="stat-subtext">1 Film Limit / Month</span>
+                </div>
+            </div>
+
+            <!-- Active Premium Users -->
+            <div class="stat-card">
+                <div class="stat-icon icon-premium">
+                    <i class="fa-solid fa-crown"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-title">Premium / VIP</span>
+                    <span class="stat-value loading-shimmer" id="statPremiumUsers">...</span>
+                    <span class="stat-subtext">Unlimited Film Access</span>
+                </div>
+            </div>
+
+            <!-- 1 View Limit Reached -->
+            <div class="stat-card">
+                <div class="stat-icon icon-exceeded">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-title">1-View Limit Reached</span>
+                    <span class="stat-value loading-shimmer" id="statExceededUsers">...</span>
+                    <span class="stat-subtext">Free limit exhausted</span>
+                </div>
+            </div>
+
+            <!-- Total Films Sent -->
+            <div class="stat-card">
+                <div class="stat-icon icon-films">
+                    <i class="fa-solid fa-film"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-title">Total Films Sent</span>
+                    <span class="stat-value loading-shimmer" id="statTotalFilms">...</span>
+                    <span class="stat-subtext">Across all bot users</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- MAIN USERS & FILM TRACKING SECTION -->
+        <main class="content-card">
+            <!-- Toolbar -->
+            <div class="card-toolbar">
+                <div class="toolbar-title-group">
+                    <h2><i class="fa-solid fa-users-gear" style="color: var(--primary);"></i> Registered Users & Film Views Tracker</h2>
+                    <p>Track which numbers are registered, their plan (Free 1-View or Premium), and how many films watched</p>
+                </div>
+
+                <div class="toolbar-controls">
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="searchInput" class="search-input" placeholder="Search phone number or name..." oninput="handleSearch()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Tabs -->
+            <div class="filter-tabs">
+                <button class="tab-btn active" data-filter="all" onclick="setFilter('all')">
+                    All Tracked Users <span class="tab-count" id="countAll">0</span>
+                </button>
+                <button class="tab-btn" data-filter="free" onclick="setFilter('free')">
+                    <i class="fa-solid fa-user" style="color: #38bdf8;"></i> Free Plan (1 View) <span class="tab-count" id="countFree">0</span>
+                </button>
+                <button class="tab-btn" data-filter="premium" onclick="setFilter('premium')">
+                    <i class="fa-solid fa-crown" style="color: #f59e0b;"></i> Premium / VIP <span class="tab-count" id="countPremium">0</span>
+                </button>
+                <button class="tab-btn" data-filter="exceeded" onclick="setFilter('exceeded')">
+                    <i class="fa-solid fa-circle-exclamation" style="color: #ef4444;"></i> Limit Reached (1/1) <span class="tab-count" id="countExceeded">0</span>
+                </button>
+                <button class="tab-btn" data-filter="connected" onclick="setFilter('connected')">
+                    <i class="fa-solid fa-circle" style="color: #10b981; font-size: 0.6rem;"></i> Connected Bots <span class="tab-count" id="countConnected">0</span>
+                </button>
+            </div>
+
+            <!-- Table Container -->
+            <div class="table-container">
+                <table id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>User / Phone Number</th>
+                            <th>Bot Session</th>
+                            <th>Current Plan</th>
+                            <th>Films Watched (This Month)</th>
+                            <th>Remaining Views</th>
+                            <th>Lifetime Films</th>
+                            <th>Registered Date</th>
+                            <th style="text-align: right;">Quick Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr>
+                            <td colspan="8" style="text-align: center; padding: 3rem;">
+                                <i class="fa-solid fa-spinner fa-spin" style="font-size: 1.5rem; color: var(--primary);"></i>
+                                <p style="margin-top: 0.75rem; color: var(--text-muted);">Loading registered users and view tracking...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast">
+        <i id="toastIcon" class="fa-solid fa-circle-check"></i>
+        <span id="toastMsg">Operation successful</span>
+    </div>
+
+    <script>
+        const API_BASE = (window.location.origin.includes('wpbot.kaveez.top') || window.location.port === '3055')
+            ? ''
+            : 'https://wpbot.kaveez.top';
+
+        let allUsers = [];
+        let currentFilter = 'all';
+        let searchQuery = '';
+
+        async function loadAllData() {
+            const refreshBtn = document.getElementById('refreshBtn');
+            refreshBtn.querySelector('i').classList.add('fa-spin');
+
+            try {
+                await Promise.all([fetchStats(), fetchUsers()]);
+                const now = new Date();
+                document.getElementById('lastUpdated').textContent = 'Updated: ' + now.toLocaleTimeString();
+            } catch (err) {
+                console.error("Data load failed:", err);
+                showToast("Failed to load dashboard data", "error");
+            } finally {
+                setTimeout(() => {
+                    refreshBtn.querySelector('i').classList.remove('fa-spin');
+                }, 500);
+            }
+        }
+
+        async function fetchStats() {
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/stats`);
+                if (!res.ok) {
+                    throw new Error(`Server returned status ${res.status} (${res.statusText || 'Offline'})`);
+                }
+                const data = await res.json();
+
+                const elTotal = document.getElementById('statTotalUsers');
+                const elFree = document.getElementById('statFreeUsers');
+                const elPrem = document.getElementById('statPremiumUsers');
+                const elExceeded = document.getElementById('statExceededUsers');
+                const elFilms = document.getElementById('statTotalFilms');
+                const elConnectedSub = document.getElementById('statConnectedSub');
+
+                animateValue(elTotal, data.totalTrackedUsers || data.totalRegistered || 0);
+                animateValue(elFree, data.freeUsers || 0);
+                animateValue(elPrem, data.premiumUsers || 0);
+                animateValue(elExceeded, data.limitExceededUsers || 0);
+                animateValue(elFilms, data.totalFilmsSent || 0);
+
+                elConnectedSub.textContent = (data.totalUsers || 0) + ' Connected Bots';
+            } catch (err) {
+                console.warn("Failed to load stats:", err.message);
+                ['statTotalUsers', 'statFreeUsers', 'statPremiumUsers', 'statExceededUsers', 'statTotalFilms'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.textContent = '0';
+                        el.classList.remove('loading-shimmer');
+                    }
+                });
+            }
+        }
+
+        async function fetchUsers() {
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/users`);
+                if (!res.ok) {
+                    throw new Error(`Server returned status ${res.status} (${res.statusText || 'Offline'})`);
+                }
+                const data = await res.json();
+
+                if (data.success && Array.isArray(data.users)) {
+                    allUsers = data.users;
+                    updateTabCounts();
+                    renderUsersTable();
+                }
+            } catch (err) {
+                console.warn("Failed to fetch users:", err.message);
+                document.getElementById('usersTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 2.5rem; color: var(--danger);">
+                            <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.5rem; margin-bottom: 0.5rem; display: block;"></i>
+                            <b>Bot Server Offline / Not Responding (${escapeHtml(err.message)})</b>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.4rem;">
+                                Please start the bot process on your VPS using: <code style="color: #fff; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px;">pm2 start index.js --name "WhatsappBot"</code>
+                            </p>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function updateTabCounts() {
+            const countAll = allUsers.length;
+            const countFree = allUsers.filter(u => u.plan === 'Free' || u.plan === 'Expired Premium').length;
+            const countPrem = allUsers.filter(u => u.isPremiumActive || u.isAdmin).length;
+            const countExceeded = allUsers.filter(u => u.isExceeded).length;
+            const countConnected = allUsers.filter(u => u.sessionStatus === 'connected').length;
+
+            document.getElementById('countAll').textContent = countAll;
+            document.getElementById('countFree').textContent = countFree;
+            document.getElementById('countPremium').textContent = countPrem;
+            document.getElementById('countExceeded').textContent = countExceeded;
+            document.getElementById('countConnected').textContent = countConnected;
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-filter') === filter);
+            });
+            renderUsersTable();
+        }
+
+        function handleSearch() {
+            searchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
+            renderUsersTable();
+        }
+
+        function renderUsersTable() {
+            const tbody = document.getElementById('usersTableBody');
+            let filtered = allUsers.filter(u => {
+                // Filter tab match
+                if (currentFilter === 'free' && !(u.plan === 'Free' || u.plan === 'Expired Premium')) return false;
+                if (currentFilter === 'premium' && !(u.isPremiumActive || u.isAdmin)) return false;
+                if (currentFilter === 'exceeded' && !u.isExceeded) return false;
+                if (currentFilter === 'connected' && u.sessionStatus !== 'connected') return false;
+
+                // Search query match
+                if (searchQuery) {
+                    const phoneMatch = u.phoneNumber && u.phoneNumber.toLowerCase().includes(searchQuery);
+                    const nameMatch = u.username && u.username.toLowerCase().includes(searchQuery);
+                    return phoneMatch || nameMatch;
+                }
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8">
+                            <div class="empty-state">
+                                <i class="fa-solid fa-users-slash empty-icon"></i>
+                                <p style="font-weight: 600; font-size: 1rem; color: var(--text-main);">No matching registered users found</p>
+                                <p style="font-size: 0.85rem;">Try adjusting your search query or switching filter tabs.</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(u => {
+                const cleanPhone = u.phoneNumber.replace(/[^0-9]/g, '');
+                const formattedPhone = cleanPhone.startsWith('94')
+                    ? `+94 ${cleanPhone.substring(2, 4)} ${cleanPhone.substring(4, 7)} ${cleanPhone.substring(7)}`
+                    : `+${cleanPhone}`;
+
+                // Plan Badge
+                let planBadge = '';
+                if (u.isAdmin) {
+                    planBadge = `<span class="plan-badge plan-admin"><i class="fa-solid fa-crown"></i> VIP / Admin</span>`;
+                } else if (u.isPremiumActive) {
+                    const expiry = u.premiumExpiryDate ? new Date(u.premiumExpiryDate).toLocaleDateString() : '';
+                    planBadge = `<span class="plan-badge plan-premium" title="Expires: ${expiry}"><i class="fa-solid fa-star"></i> Premium</span>`;
+                } else if (u.plan === 'Expired Premium') {
+                    planBadge = `<span class="plan-badge plan-expired"><i class="fa-solid fa-clock-rotate-left"></i> Expired Prem</span>`;
+                } else {
+                    planBadge = `<span class="plan-badge plan-free"><i class="fa-solid fa-user"></i> Free (1 View)</span>`;
+                }
+
+                // Session Status
+                let sessionHtml = '';
+                if (u.sessionStatus === 'connected') {
+                    sessionHtml = `<span class="session-badge session-connected"><i class="fa-solid fa-circle" style="font-size: 0.55rem;"></i> Connected</span>`;
+                } else if (u.sessionStatus === 'pending') {
+                    sessionHtml = `<span class="session-badge session-pending"><i class="fa-solid fa-clock" style="font-size: 0.7rem;"></i> Pending</span>`;
+                } else {
+                    sessionHtml = `<span class="session-badge session-disconnected"><i class="fa-regular fa-circle" style="font-size: 0.55rem;"></i> Disconnected</span>`;
+                }
+
+                // Films Watched Progress Bar
+                let progressHtml = '';
+                if (u.isAdmin || u.isPremiumActive) {
+                    progressHtml = `
+                        <div class="progress-box">
+                            <div class="progress-labels">
+                                <span style="color: #fbbf24;">${u.filmsWatchedThisMonth} Films</span>
+                                <span style="color: var(--text-muted); font-size: 0.7rem;">Unlimited</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill fill-gold" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    const watched = u.filmsWatchedThisMonth || 0;
+                    const pct = Math.min(100, (watched / 1) * 100);
+                    const fillColor = watched >= 1 ? 'fill-red' : 'fill-green';
+                    const textColor = watched >= 1 ? 'var(--danger)' : 'var(--success)';
+                    progressHtml = `
+                        <div class="progress-box">
+                            <div class="progress-labels">
+                                <span style="color: ${textColor}; font-weight: 700;">${watched} / 1 Film</span>
+                                <span style="color: var(--text-muted); font-size: 0.7rem;">${pct}% used</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill ${fillColor}" style="width: ${pct}%;"></div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Remaining Views Pill
+                let remainingHtml = '';
+                if (u.isAdmin || u.isPremiumActive) {
+                    remainingHtml = `<span class="remaining-pill rem-unlimited"><i class="fa-solid fa-infinity"></i> Unlimited</span>`;
+                } else if (u.isExceeded) {
+                    remainingHtml = `<span class="remaining-pill rem-exceeded"><i class="fa-solid fa-ban"></i> 0 Left (Limit)</span>`;
+                } else {
+                    remainingHtml = `<span class="remaining-pill rem-available"><i class="fa-solid fa-check"></i> 1 View Left</span>`;
+                }
+
+                // Date
+                const dateStr = u.registeredAt ? new Date(u.registeredAt).toLocaleDateString() : 'N/A';
+
+                return `
+                    <tr>
+                        <td>
+                            <div class="user-cell">
+                                <div class="user-avatar">
+                                    <i class="fa-solid fa-mobile-screen"></i>
+                                </div>
+                                <div class="user-phone-wrap">
+                                    <span class="user-phone">
+                                        ${formattedPhone}
+                                        <button class="copy-btn" onclick="copyToClipboard('${cleanPhone}')" title="Copy Number">
+                                            <i class="fa-regular fa-copy"></i>
+                                        </button>
+                                    </span>
+                                    <span class="user-name">${escapeHtml(u.username || 'User')}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>${sessionHtml}</td>
+                        <td>${planBadge}</td>
+                        <td>${progressHtml}</td>
+                        <td>${remainingHtml}</td>
+                        <td style="font-family: 'JetBrains Mono', monospace; font-weight: 600;">${u.totalLifetimeFilms || 0}</td>
+                        <td style="color: var(--text-muted); font-size: 0.8rem;">${dateStr}</td>
+                        <td>
+                            <div class="table-actions" style="justify-content: flex-end;">
+                                <a href="https://wa.me/${cleanPhone}" target="_blank" class="mini-btn btn-wa" title="Message on WhatsApp">
+                                    <i class="fa-brands fa-whatsapp"></i> Chat
+                                </a>
+                                <button class="mini-btn btn-reset" onclick="resetUserViews('${cleanPhone}')" title="Reset monthly views to 0 (Give 1 free view)">
+                                    <i class="fa-solid fa-rotate-left"></i> Reset Views
+                                </button>
+                                ${u.isPremiumActive ? `
+                                    <button class="mini-btn" onclick="setPremium('${cleanPhone}', 0, 'revoke')" title="Revoke Premium Plan" style="color: #f87171;">
+                                        <i class="fa-solid fa-xmark"></i> Revoke
+                                    </button>
+                                ` : `
+                                    <button class="mini-btn btn-prem" onclick="setPremium('${cleanPhone}', 30, 'grant')" title="Upgrade to 30 Days Premium (Unlimited)">
+                                        <i class="fa-solid fa-crown"></i> +30d Prem
+                                    </button>
+                                `}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function resetUserViews(phone) {
+            if (!confirm(`Reset films watched count to 0 for +${phone}?\nThis will grant them 1 Free Film View again for this month.`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/user/reset-views?number=${phone}`);
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    loadAllData();
+                } else {
+                    showToast(data.error || 'Failed to reset views', 'error');
+                }
+            } catch (err) {
+                showToast('Network error resetting views', 'error');
+            }
+        }
+
+        async function setPremium(phone, days, action) {
+            const promptMsg = action === 'revoke'
+                ? `Revoke Premium subscription from +${phone} and revert to Free Plan (1 View Limit)?`
+                : `Grant ${days} days of Unlimited Premium access to +${phone}?`;
+
+            if (!confirm(promptMsg)) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/user/set-premium?number=${phone}&days=${days}&action=${action}`);
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    loadAllData();
+                } else {
+                    showToast(data.error || 'Failed to update plan', 'error');
+                }
+            } catch (err) {
+                showToast('Network error updating plan', 'error');
+            }
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(`Copied +${text} to clipboard`, 'success');
+            });
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastMsg.textContent = msg;
+            toast.className = type + ' show';
+            toastIcon.className = type === 'success' ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-exclamation';
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3500);
+        }
+
+        function animateValue(obj, end, duration = 800) {
+            let startTimestamp = null;
+            const startVal = parseInt(obj.textContent.replace(/[^0-9]/g, '')) || 0;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const current = Math.floor(progress * (end - startVal) + startVal);
+                obj.textContent = current.toLocaleString();
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    obj.classList.remove('loading-shimmer');
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"']/g, m => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[m]));
+        }
+
+        // Auto Refresh every 30 seconds
+        setInterval(loadAllData, 30000);
+
+        // Initial load
+        loadAllData();
+    </script>
+</body>
+</html>
