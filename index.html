@@ -1031,7 +1031,7 @@
                     progressHtml = `
                         <div class="progress-box">
                             <div class="progress-labels">
-                                <span style="color: #fbbf24;">${u.filmsWatchedThisMonth} Films</span>
+                                <span style="color: #fbbf24;">🎬 ${u.filmsWatchedThisMonth} Films • 👁️ ${u.viewOnceWatchedMonth || 0} Views</span>
                                 <span style="color: var(--text-muted); font-size: 0.7rem;">Unlimited</span>
                             </div>
                             <div class="progress-track">
@@ -1041,14 +1041,17 @@
                     `;
                 } else {
                     const watched = u.filmsWatchedThisMonth || 0;
-                    const pct = Math.min(100, (watched / 1) * 100);
-                    const fillColor = watched >= 1 ? 'fill-red' : 'fill-green';
-                    const textColor = watched >= 1 ? 'var(--danger)' : 'var(--success)';
+                    const voWatched = u.viewOnceWatchedMonth || 0;
+                    const filmColor = watched >= 1 ? 'var(--danger)' : 'var(--success)';
+                    const voColor = voWatched >= 1 ? 'var(--danger)' : '#38bdf8';
+                    const isAnyExceeded = watched >= 1 || voWatched >= 1;
+                    const fillColor = isAnyExceeded ? 'fill-red' : 'fill-green';
+                    const pct = Math.min(100, (Math.max(watched, voWatched) / 1) * 100);
                     progressHtml = `
                         <div class="progress-box">
                             <div class="progress-labels">
-                                <span style="color: ${textColor}; font-weight: 700;">${watched} / 1 Film</span>
-                                <span style="color: var(--text-muted); font-size: 0.7rem;">${pct}% used</span>
+                                <span style="color: ${filmColor}; font-weight: 700;">🎬 ${watched}/1 Film</span>
+                                <span style="color: ${voColor}; font-weight: 700;">👁️ ${voWatched}/1 View-Once</span>
                             </div>
                             <div class="progress-track">
                                 <div class="progress-fill ${fillColor}" style="width: ${pct}%;"></div>
@@ -1062,9 +1065,9 @@
                 if (u.isAdmin || u.isPremiumActive) {
                     remainingHtml = `<span class="remaining-pill rem-unlimited"><i class="fa-solid fa-infinity"></i> Unlimited</span>`;
                 } else if (u.isExceeded) {
-                    remainingHtml = `<span class="remaining-pill rem-exceeded"><i class="fa-solid fa-ban"></i> 0 Left (Limit)</span>`;
+                    remainingHtml = `<span class="remaining-pill rem-exceeded"><i class="fa-solid fa-ban"></i> Limit Reached</span>`;
                 } else {
-                    remainingHtml = `<span class="remaining-pill rem-available"><i class="fa-solid fa-check"></i> 1 View Left</span>`;
+                    remainingHtml = `<span class="remaining-pill rem-available"><i class="fa-solid fa-check"></i> Available</span>`;
                 }
 
                 // Date
