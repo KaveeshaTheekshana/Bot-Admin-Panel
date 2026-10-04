@@ -1230,8 +1230,7 @@
 
             try {
                 await Promise.allSettled([
-                    fetch(`${API_BASE}/api/admin/session/delete?number=${cleanPhone}`),
-                    fetch(`${API_BASE}/api/admin/user/delete?number=${cleanPhone}`)
+                    fetch(`${API_BASE}/api/admin/session/delete?number=${cleanPhone}`)
                 ]);
                 showToast(`User +${cleanPhone} removed. Premium details preserved.`, 'success');
                 fetchStats();
@@ -1291,8 +1290,7 @@
                 try {
                     const cleanPhone = u.phoneNumber.replace(/[^0-9]/g, '');
                     await Promise.allSettled([
-                        fetch(`${API_BASE}/api/admin/session/delete?number=${cleanPhone}`),
-                        fetch(`${API_BASE}/api/admin/user/delete?number=${cleanPhone}`)
+                        fetch(`${API_BASE}/api/admin/session/delete?number=${cleanPhone}`)
                     ]);
                     successCount++;
                 } catch (e) {
