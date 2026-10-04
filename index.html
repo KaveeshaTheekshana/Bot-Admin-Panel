@@ -707,6 +707,9 @@
 
             <div class="header-actions">
                 <span id="lastUpdated" style="font-size: 0.75rem; color: var(--text-subtle);"></span>
+                <button class="action-btn" id="cleanCacheBtn" onclick="cleanDisconnectedSessions()" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.4); color: #ef4444; margin-right: 8px;">
+                    <i class="fa-solid fa-broom"></i> Clean Cache
+                </button>
                 <button class="action-btn" id="refreshBtn" onclick="loadAllData()">
                     <i class="fa-solid fa-rotate-right"></i> Refresh
                 </button>
@@ -852,6 +855,7 @@
             : 'https://wpbot.kaveez.top';
 
         let allUsers = [];
+        let deletedNumbers = new Set(JSON.parse(localStorage.getItem('admin_deleted_numbers') || '[]'));
         let currentFilter = 'all';
         let searchQuery = '';
 
@@ -916,7 +920,18 @@
                 const data = await res.json();
 
                 if (data.success && Array.isArray(data.users)) {
-                    allUsers = data.users;
+                    allUsers = data.users.filter(u => {
+                        const clean = String(u.phoneNumber || '').replace(/[^0-9]/g, '');
+                        // If user has actively connected or is pending pairing, unblock them from deletedNumbers!
+                        if (u.sessionStatus === 'connected' || u.sessionStatus === 'pending') {
+                            if (deletedNumbers.has(clean)) {
+                                deletedNumbers.delete(clean);
+                                try { localStorage.setItem('admin_deleted_numbers', JSON.stringify([...deletedNumbers])); } catch(e){}
+                            }
+                            return true;
+                        }
+                        return !deletedNumbers.has(clean);
+                    });
                     updateTabCounts();
                     renderUsersTable();
                 }
@@ -1114,6 +1129,15 @@
                                         <i class="fa-solid fa-crown"></i> +30d Prem
                                     </button>
                                 `}
+                                ${u.sessionStatus === 'connected' ? `
+                                    <button class="mini-btn" onclick="disconnectBotSession('${cleanPhone}')" title="Stop and Disconnect this Bot instance" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.4);">
+                                        <i class="fa-solid fa-power-off"></i> Stop Bot
+                                    </button>
+                                ` : `
+                                    <button class="mini-btn" onclick="deleteBotSession('${cleanPhone}')" title="Wipe all session credentials for this bot" style="color: #94a3b8;">
+                                        <i class="fa-solid fa-trash"></i> Delete
+                                    </button>
+                                `}
                             </div>
                         </td>
                     </tr>
@@ -1165,6 +1189,118 @@
             navigator.clipboard.writeText(text).then(() => {
                 showToast(`Copied +${text} to clipboard`, 'success');
             });
+        }
+
+        async function disconnectBotSession(phone) {
+            if (!confirm(`Stop Bot for +${phone}?\nThis will disconnect this bot session so it will NOT start or reply to messages.`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/session/disconnect?number=${phone}`);
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    loadAllData();
+                } else {
+                    showToast(data.error || 'Failed to stop bot', 'error');
+                }
+            } catch (err) {
+                showToast('Network error stopping bot session', 'error');
+            }
+        }
+
+        async function deleteBotSession(phone) {
+            const cleanPhone = String(phone).replace(/[^0-9]/g, '');
+            if (!confirm(`Remove +${cleanPhone} from dashboard?\n(Note: Any active Premium plan details will remain safe in database for when they log in again).`)) {
+                return;
+            }
+
+            // Immediately mark as deleted and persist in localStorage
+            deletedNumbers.add(cleanPhone);
+            try { localStorage.setItem('admin_deleted_numbers', JSON.stringify([...deletedNumbers])); } catch(e){}
+
+            allUsers = allUsers.filter(u => {
+                const uClean = String(u.phoneNumber || '').replace(/[^0-9]/g, '');
+                return uClean !== cleanPhone && !uClean.endsWith(cleanPhone) && !cleanPhone.endsWith(uClean);
+            });
+            updateTabCounts();
+            renderUsersTable();
+            showToast(`Removed +${cleanPhone} from dashboard`, 'success');
+
+            try {
+                await Promise.allSettled([
+                    fetch(`${API_BASE}/api/admin/session/delete?number=${cleanPhone}`),
+                    fetch(`${API_BASE}/api/admin/user/delete?number=${cleanPhone}`)
+                ]);
+                showToast(`User +${cleanPhone} removed. Premium details preserved.`, 'success');
+                fetchStats();
+            } catch (err) {
+                console.error("Error deleting session:", err);
+            }
+        }
+
+        async function cleanDisconnectedSessions() {
+            // Only clean disconnected FREE or unprivileged users; NEVER delete users with active Premium plan or Admins!
+            const disconnectedUsers = allUsers.filter(u => 
+                u.sessionStatus !== 'connected' && 
+                u.sessionStatus !== 'pending' && 
+                !u.isPremiumActive && 
+                !u.isAdmin
+            );
+            if (disconnectedUsers.length === 0) {
+                showToast("No disconnected free users to clean. Active Premium packages are preserved.", "success");
+                return;
+            }
+            if (!confirm(`Are you sure you want to permanently DELETE ${disconnectedUsers.length} disconnected free session(s)?\n(Note: Active Premium users will be safely preserved).`)) {
+                return;
+            }
+            
+            // Instantly wipe only eligible disconnected free sessions from UI
+            for (let u of disconnectedUsers) {
+                const cleanPhone = String(u.phoneNumber || '').replace(/[^0-9]/g, '');
+                if (cleanPhone) deletedNumbers.add(cleanPhone);
+            }
+            try { localStorage.setItem('admin_deleted_numbers', JSON.stringify([...deletedNumbers])); } catch(e){}
+            allUsers = allUsers.filter(u => 
+                u.sessionStatus === 'connected' || 
+                u.sessionStatus === 'pending' || 
+                u.isPremiumActive || 
+                u.isAdmin
+            );
+            updateTabCounts();
+            renderUsersTable();
+            showToast(`Purging ${disconnectedUsers.length} disconnected free session(s)...`, 'success');
+
+            // 1. Try backend clean-cache API first
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/clean-cache`);
+                const data = await res.json();
+                if (data && data.success) {
+                    showToast(`Clean Cache Complete: Removed ${data.deletedCount} session(s).`, 'success');
+                    fetchStats();
+                    return;
+                }
+            } catch (e) {
+                console.warn("clean-cache endpoint fallback to individual delete", e);
+            }
+
+            // 2. Individual session delete fallback
+            let successCount = 0;
+            for (let u of disconnectedUsers) {
+                try {
+                    const cleanPhone = u.phoneNumber.replace(/[^0-9]/g, '');
+                    await Promise.allSettled([
+                        fetch(`${API_BASE}/api/admin/session/delete?number=${cleanPhone}`),
+                        fetch(`${API_BASE}/api/admin/user/delete?number=${cleanPhone}`)
+                    ]);
+                    successCount++;
+                } catch (e) {
+                    console.error("Failed to delete session for", u.phoneNumber, e);
+                }
+            }
+            showToast(`Clean Cache Complete: Purged ${successCount} session(s).`, 'success');
+            fetchStats();
         }
 
         function showToast(msg, type = 'success') {
